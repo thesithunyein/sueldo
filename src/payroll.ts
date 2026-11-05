@@ -1,8 +1,9 @@
 import { getAddress } from 'viem'
 import { agentAddress, isConfigured, readTreasury, sendWars } from './chain.js'
-import { decide } from './guardrails.js'
-import { arsToWars } from './money.js'
 import { monthOf, periodLabel, previousWeeks, weekRange } from './period.js'
+import { arsToWars } from './money.js'
+import { decide } from './guardrails.js'
+import { say, type Lang } from './lang.js'
 import { load, mutate, newId, type Db, type Decision, type PayrollRun, type Shift } from './store.js'
 
 export type Plan = {
@@ -35,9 +36,10 @@ const confirmedPayTotal = (run: PayrollRun): number =>
 
 export const buildPlan = async (
   db: Db,
-  opts: { approvedWorkerIds?: string[]; ref?: Date } = {},
+  opts: { approvedWorkerIds?: string[]; ref?: Date; lang?: Lang } = {},
 ): Promise<Plan> => {
   const ref = opts.ref ?? new Date()
+  const lang = opts.lang ?? 'en'
   const week = weekRange(ref)
   const prior = previousWeeks(4, ref)
   const month = monthOf(week.start)
@@ -49,13 +51,14 @@ export const buildPlan = async (
 
   const alreadyPaidBusinessCentavos = monthRuns.reduce((sum, r) => sum + confirmedPayTotal(r), 0)
 
-  const treasury = await readTreasury().catch(() => null)
-  const treasuryCentavos = treasury ? treasury.warsCentavos : null
+  const channel = isConfigured() ? 'account' : 'cash'
+  const treasury = channel === 'account' ? await readTreasury().catch(() => null) : null
+  const treasuryCentavos = channel === 'cash' ? null : treasury ? treasury.warsCentavos : null
 
   const decisions: Decision[] = []
   let runTotalCentavos = 0
 
-  for (const worker of [...db.workers].sort((a, b) => a.name.localeCompare(b.name, 'es'))) {
+  for (const worker of [...db.workers].sort((a, b) => a.name.localeCompare(b.name, 'en'))) {
     const hours = hoursInRange(db.shifts, worker.id, week.start, week.end)
     const grossCentavos = Math.round(hours * worker.hourlyRateCentavos)
     const paidThisWeek = thisWeekRuns.reduce((sum, r) => sum + confirmedPay(r, worker.id), 0)
@@ -74,6 +77,8 @@ export const buildPlan = async (
       treasuryCentavos,
       trailingAverageHours: priorHours / 4,
       approved: approved.has(worker.id),
+      channel,
+      lang,
     })
 
     if (verdict.action === 'pay') runTotalCentavos += grossCentavos
@@ -93,7 +98,7 @@ export const buildPlan = async (
     decisions.filter((d) => d.action === action).reduce((s, d) => s + d.grossCentavos, 0)
 
   return {
-    period: { ...week, label: periodLabel(week.start, week.end) },
+    period: { ...week, label: periodLabel(week.start, week.end, lang) },
     decisions,
     totals: {
       computedCentavos: decisions.reduce((s, d) => s + d.grossCentavos, 0),
@@ -105,8 +110,8 @@ export const buildPlan = async (
     },
     treasuryCentavos,
     wallet: agentAddress(),
-    canExecute: isConfigured() && decisions.some((d) => d.action === 'pay'),
-    blocked: isConfigured() ? null : 'Falta la clave del agente (AGENT_KEY) para poder firmar.',
+    canExecute: decisions.some((d) => d.action === 'pay'),
+    blocked: null,
   }
 }
 
@@ -121,16 +126,21 @@ export const isRunning = (): boolean => inFlight
 export const runPayroll = async (opts: {
   trigger: 'owner' | 'schedule'
   approvedWorkerIds?: string[]
+  lang?: Lang
 }): Promise<PayrollRun> => {
-  if (inFlight) throw new Error('Ya hay una nómina en curso.')
-  if (!isConfigured()) throw new Error('Falta AGENT_KEY: el agente no puede firmar transacciones.')
+  const lang = opts.lang ?? 'en'
+  if (inFlight) throw new Error(say(lang, 'A payment is already running.', 'Ya hay un pago en curso.'))
 
   inFlight = true
   try {
     const db = load()
-    const plan = await buildPlan(db, { approvedWorkerIds: opts.approvedWorkerIds })
+    const plan = await buildPlan(db, { approvedWorkerIds: opts.approvedWorkerIds, lang })
     if (plan.totals.payCentavos === 0) {
-      throw new Error(plan.totals.computedCentavos === 0 ? 'No hay horas cargadas en esta semana.' : 'Ningún pago pasó las reglas.')
+      throw new Error(
+        plan.totals.computedCentavos === 0
+          ? say(lang, 'No hours this week.', 'No hay horas esta semana.')
+          : say(lang, 'Nobody can be paid yet.', 'Todavía no se puede pagar a nadie.'),
+      )
     }
 
     const run: PayrollRun = {
@@ -152,6 +162,28 @@ export const runPayroll = async (opts: {
 
     const workerById = new Map(db.workers.map((w) => [w.id, w]))
 
+    if (!isConfigured()) {
+      await mutate((d) => {
+        const target = d.runs.find((r) => r.id === run.id)
+        if (!target) return
+        for (const row of target.decisions) {
+          if (row.action !== 'pay') continue
+          row.status = 'confirmed'
+          row.paidHow = 'cash'
+          target.totals.paidCentavos += row.grossCentavos
+        }
+        target.finishedAt = new Date().toISOString()
+      })
+      for (const decision of run.decisions) {
+        if (decision.action !== 'pay') continue
+        decision.status = 'confirmed'
+        decision.paidHow = 'cash'
+        run.totals.paidCentavos += decision.grossCentavos
+      }
+      run.finishedAt = new Date().toISOString()
+      return run
+    }
+
     for (const decision of run.decisions) {
       if (decision.action !== 'pay') continue
       const worker = workerById.get(decision.workerId)
@@ -165,12 +197,14 @@ export const runPayroll = async (opts: {
           if (!target || !row) return
           row.txHash = result.hash
           row.status = 'confirmed'
+          row.paidHow = 'transfer'
           row.attribution = result.attribution
           row.offRampUrl = offRampUrl(worker.wallet, decision.grossCentavos)
           target.totals.paidCentavos += decision.grossCentavos
         })
         decision.txHash = result.hash
         decision.status = 'confirmed'
+        decision.paidHow = 'transfer'
         decision.attribution = result.attribution
         decision.offRampUrl = offRampUrl(worker.wallet, decision.grossCentavos)
       } catch (error) {
@@ -181,7 +215,7 @@ export const runPayroll = async (opts: {
           row.status = 'failed'
           row.reasons = [
             ...row.reasons,
-            { code: 'X_ENVIO', message: 'No se pudo enviar el pago.', detail: (error as Error).message },
+            { code: 'X_ENVIO', message: say(lang, 'Could not send the payment.', 'No se pudo enviar el pago.'), detail: (error as Error).message },
           ]
         })
         decision.status = 'failed'
@@ -200,7 +234,7 @@ export const runPayroll = async (opts: {
   }
 }
 
-export const listReceipts = (db: Db) =>
+export const listReceipts = (db: Db, lang: Lang = 'en') =>
   db.runs
     .filter((r) => r.mode === 'live')
     .flatMap((run) =>
@@ -212,8 +246,9 @@ export const listReceipts = (db: Db) =>
           workerId: d.workerId,
           hours: d.hours,
           amountCentavos: d.grossCentavos,
-          period: periodLabel(run.periodStart, run.periodEnd),
+          period: periodLabel(run.periodStart, run.periodEnd, lang),
           status: d.status ?? 'pending',
+          paidHow: d.paidHow,
           txHash: d.txHash,
           offRampUrl: d.offRampUrl,
           attribution: d.attribution,

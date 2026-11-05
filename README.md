@@ -1,92 +1,164 @@
 # Sueldo
 
-Payroll for the small businesses Argentina actually has. The owner logs hours, the agent computes each wage, applies the rules the owner set, and pays every worker in **wARS on Celo mainnet**. Nobody converts to dollars, nobody goes to the bank, nobody downloads a wallet to get paid.
+Weekly pay for a small shop. The owner logs the hours, sees what each person is owed, and closes the week. Amounts stay in pesos.
 
-Built for the **Stable Agents: LatAm** track of the Celo *Agents on Open Rails* hackathon.
+Sueldo is one business, one page, and a file for the accountant. It does not ask the owner to learn a wallet.
 
----
+Author: Sithu Nyein · [sithunyein.mailto@gmail.com](mailto:sithunyein.mailto@gmail.com)
 
 ## The problem
 
-A bakery in Rosario with four employees pays wages in cash. Every week that means: counting cash, a trip to the bank for change, a hand-written receipt per person, and a shoebox of paper that has to agree with the accountant at month end. If the owner is away on Friday, payday slips. If a worker needs the money on Saturday, they ask for an advance and the count breaks.
+A bakery, kiosk, or workshop with a few people pays wages in cash every week. That means counting bills, getting change, writing a receipt by hand, and keeping a pile of paper that has to match the accountant at the end of the month.
 
-The alternative — an online payroll service — wants a bank account, a CUIT-backed contract and a monthly fee, and then pays into bank accounts that half the staff do not have.
+If the owner is away on Friday, payday slips. If someone needs money on Saturday, the owner hands over cash and the count breaks.
 
-## Who it's for
+A normal payroll service wants a bank account, a formal contract, and a monthly fee, then pays into bank accounts that many of the staff do not have.
 
-**Marta Quiroga**, 51, owns Panadería Los Andes in Rosario: four employees, cash wages, a phone with WhatsApp. She is not a crypto user and does not want to be. Her workers are not crypto users either. Two of them get paid into a bank account, two take cash.
+Sueldo replaces the pile of paper. The owner still decides the rules. The page shows why a person is ready, waiting, or not paid, before any money moves.
 
-She is a persona drawn from the cash-wage pattern of small Argentine businesses, not a signed customer — the pilot in this repository runs on test wallets. What follows is the product built for her.
+## How it works
 
-Sueldo gives her one screen in Spanish, amounts in pesos, and a payday that happens whether or not she is standing in the bakery.
-
-## How a payroll week works
-
+```mermaid
+flowchart TD
+  A[Log the hours] --> B[Compute the week]
+  B --> C{Rules}
+  C -->|Ready| D[Close the week]
+  C -->|Needs your OK| E[You approve]
+  C -->|Blocked| F[Not paid, with the reason]
+  E --> D
+  D --> G{Account set up?}
+  G -->|No| H[Mark paid in cash]
+  G -->|Yes| I[Send wARS on Celo]
+  H --> J[Receipt]
+  I --> J
 ```
-hours logged ──► agent computes wages ──► guardrails ──► wARS transfers ──► receipts
-                                              │
-                                              └── refuse / hold with a reason the owner can read
-```
 
-1. **Hours.** The owner (or a supervisor) logs shifts through the web UI. A shift is a date and a number of hours.
-2. **Computation.** Every Monday-to-Sunday period, the agent multiplies hours by each person's hourly rate. All money is integer centavos, so nothing drifts.
-3. **Guardrails.** Before any money moves, each line is checked against the rules the owner configured (table below). The agent pays, holds for approval, or refuses — and it always says why, in Spanish, in terms of pesos.
-4. **Payment.** Each approved line becomes one `transfer` to that worker's wallet in wARS. The agent signs it, pays gas in USDC (CIP-64), and appends the hackathon's ERC-8021 attribution suffix to the calldata.
-5. **Receipt.** The transaction hash, the attribution code the chain reports for it, and a Ripio off-ramp link for the worker are written to the run. The worker can turn wARS into pesos in their bank in one tap.
+1. **Create the business.** Name, your name, city. One business on the page.
+2. **Add a person.** Name, job, pay per hour, and a monthly limit. A pay account is optional.
+3. **Log hours.** Half hours, and only days in the current week. The week runs Monday to Sunday, Argentina time.
+4. **Read the week.** Each person is ready, needs your OK, or is not paid. The reason is on the line.
+5. **Close it.** You confirm first. If no pay account is set up, this writes the week as paid in cash. You still hand over the pesos. If an account is set up and funded, each ready line is one wARS transfer on Celo mainnet.
+6. **Keep the receipt.** Name, hours, amount, and date. Download the month as a file for the accountant.
 
-The agent also runs on its own: a scheduler fires the payroll every Friday at 18:00 Argentina time if that week has not been paid yet. The button in the UI is the owner's override.
+A payment that needs your OK is not marked paid. A person already paid this week is not paid again.
 
-## Guardrails
+### Rules
 
-| Code | Rule | Outcome |
+| Code | What it checks | Result |
 | --- | --- | --- |
-| `G_HORAS` | More hours in a week than the business allows (48 h) | refuse |
-| `G_DUPLICADO` | This person already got paid this week | refuse |
-| `G_TOPE_TRABAJADOR` | The payment would pass the monthly cap agreed with this person | refuse |
-| `G_TOPE_NEGOCIO` | The payment would pass the business's monthly payroll cap | refuse |
-| `G_FONDOS` | The agent's wARS float cannot cover the run | refuse |
-| `G_BILLETERA` | The worker's payout address is invalid or zero | refuse |
-| `G_ANOMALIA` | Hours are more than 40% above that person's four-week average | hold |
-| `G_APROBACION` | A single payment is above the owner's approval threshold | hold |
-| `W_INACTIVE`, `W_SIN_HORAS`, `W_SIN_MONTO` | Nothing to pay | skip |
+| `G_HORAS` | More hours than the week allows | Not paid |
+| `G_DUPLICADO` | This person was already paid this week | Not paid |
+| `G_TOPE_TRABAJADOR` | Over that person's monthly limit | Not paid |
+| `G_TOPE_NEGOCIO` | Over the shop's monthly limit | Not paid |
+| `G_FONDOS` | The account cannot cover this pay | Not paid |
+| `G_BILLETERA` | The pay account is missing or not valid | Not paid |
+| `G_ANOMALIA` | Hours are far above that person's usual week | Needs your OK |
+| `G_APROBACION` | The amount is above the limit you set | Needs your OK |
+| `W_INACTIVE`, `W_SIN_HORAS`, `W_SIN_MONTO` | Nothing to pay | Skipped |
 
-Refusals beat holds: a line that cannot clear is never left waiting for an approval that would not help. The treasury check counts what the run has already committed, so a run cannot overdraw itself halfway through.
+A line that cannot be paid is never left waiting for an OK. Money is stored as integer centavos, so totals do not drift.
 
-## Celo stack
+`G_FONDOS` and `G_BILLETERA` apply only when a pay account is set up. In the cash book they are skipped, because you hand over the pesos yourself.
 
-- **wARS** (`0x0dc4f92879b7670e5f4e4e6e3c801d229129d90d`) is the payroll currency. One wARS is one peso, so no conversion ever happens.
-- **ERC-8004** identity for the agent, registered from the agent's own wallet. The agent card is served at `/api/agent.json`.
-- **ERC-8021** attribution: every transaction the agent sends carries the entry's code in the calldata suffix, verified back from the chain after each payment.
-- **CIP-64 gas**: the agent pays network fees in USDC when it holds enough, so the float can be pesos and the gas a stablecoin. It falls back to CELO.
-- **Ripio off-ramp links** on every receipt, built as a plain URL from the docs' query parameters, so a worker can cash out without installing anything.
+### Two ways to pay
 
-## Receipts
+| | Cash book | Account |
+| --- | --- | --- |
+| When | No `AGENT_KEY` | `AGENT_KEY` is set and the wallet holds wARS |
+| What "close the week" does | Writes the week as paid | Sends wARS, one transfer per person |
+| What the worker gets | The cash you hand them, and a receipt | A receipt, and a cash-out link when a pay account is saved |
+| What it does not do | It does not send money | It does not invent a payment if the transfer fails |
 
-A receipt is not a PDF. For each payment the app stores the worker, the hours, the amount in centavos, the period, the transaction hash, the attribution codes the chain reports for that hash, and the off-ramp link. The UI links straight to CeloScan.
+wARS on Celo is one peso per token. The page still shows pesos.
+
+## Languages
+
+English and Spanish. Use **EN** or **ES** in the bar. The choice is saved in the browser and covers the home page, the week, the dialogs, the reasons, and the month file.
+
+## Project structure
+
+```
+sueldo/
+├── api/index.ts          Vercel entry. Re-exports the server.
+├── src/
+│   ├── server.ts         HTTP API and pages
+│   ├── payroll.ts        The week, the run, the receipts
+│   ├── guardrails.ts     The rules
+│   ├── money.ts          Centavos, wARS, amount parsing
+│   ├── period.ts         Argentina week and month
+│   ├── chain.ts          Celo reads and transfers
+│   ├── store.ts          The book, one JSON file
+│   ├── lang.ts           English and Spanish messages
+│   └── config.ts         Environment
+├── web/                  Pages, styles, and the client
+├── test/                 Rules, money, periods
+├── scripts/              Wallet, smoke check, swap
+├── vercel.json
+├── LICENSE
+├── SECURITY.md
+└── CODE_OF_CONDUCT.md
+```
+
+```mermaid
+flowchart LR
+  Browser --> Server
+  Server --> Pages[web/]
+  Server --> Book[db.json]
+  Server --> Rules
+  Rules --> Celo[Celo mainnet]
+```
 
 ## Run it
 
 ```bash
 npm install
-npm run wallet     # creates .env with a fresh agent key, prints the address
-npm run seed       # four workers and five weeks of shifts
-npm start          # http://localhost:3000
-npm test           # guardrails, money, periods, attribution wire format
+npm start
 ```
 
-The agent needs wARS for the float and a little USDC or CELO for gas. Without them the UI still works: every line is computed and shown, then refused with `G_FONDOS`, because the agent will not spend money it does not have.
+Open [http://localhost:3000](http://localhost:3000). The first visit asks you to create the business. There is no sample shop.
 
 ```bash
-npm run smoke                          # balances of the agent wallet
-npm run smoke -- --send 0xDestino 1.5  # a single tagged transfer, verified after it lands
-npm run swap:in                        # turns USDC or USA₮ into the wARS float through LI.FI
-npm run swap:in -- usdc 8              # explicit token and amount
-npm run agent:register                 # ERC-8004 identity, tagged
-npm run agent:register -- --dry-run    # simulates the mint against the live registry, sends nothing
+npm test
+npm run typecheck
 ```
 
-`swap:in` reads both stablecoin balances, swaps whichever holds funds (or the one you name), and pays its own gas in that same token through the fee-currency wrapper — so a wallet that never bought CELO can still fund itself.
+Copy `.env.example` to `.env` only when you want the account path.
 
-## Status
+| Variable | What it does |
+| --- | --- |
+| `AGENT_KEY` | Signs transfers. Leave it unset to use the cash book. |
+| `RPC_URL` | Celo node. Default is `https://forno.celo.org`. |
+| `DATA_DIR` | Where `db.json` is stored. Default `.data`. |
+| `PORT` | Default `3000`. |
+| `AGENT_SCHEDULE` | `1` runs the Friday 18:00 Argentina pay while the process stays up. |
+| `PUBLIC_URL` | Public address of this app, used on the agent card. |
+| `FEE_CURRENCY` | `USDC` or `CELO` for network fees. |
+| `ATTRIBUTION_TAG` | Code attached to each on-chain payment. |
 
-Pilot. The four workers in the seed are test wallets and the pilot week runs short shifts so the on-chain demo stays cheap — the UI says so above the total. The computation, the guardrails and the settlement are the ones a real client would use; only the scale of the amounts changes.
+`npm run wallet` prints a new key. Fund it with wARS for wages and a little USDC or CELO for fees before you turn the account path on.
+
+## Deploy on Vercel
+
+The repo is ready to import. You connect the account and push the code yourself.
+
+1. Create a GitHub repository and push this project. Do not commit `.env` or `.data`.
+2. In Vercel, choose **Add New Project** and import that repository.
+3. Framework preset: **Other**. Leave the output directory empty. `vercel.json` already routes every path to the server.
+4. Add environment variables only if you need them. For a cash book, none are required. For on-chain pay, set `AGENT_KEY`, `RPC_URL`, and `PUBLIC_URL`. Set `AGENT_SCHEDULE=0` on Vercel. The function does not stay awake, so Friday does not run by itself there.
+5. Deploy.
+
+On Vercel the book is stored in `/tmp`. A cold start can wipe it. A shop that must keep its history should run `npm start` on a host with a disk and set `DATA_DIR` to a persistent folder.
+
+## Security
+
+There is no login. Whoever can open the site can edit the book. Do not publish the URL until you are ready for that, or put it behind a private network.
+
+`AGENT_KEY` never goes to the browser. See [SECURITY.md](SECURITY.md).
+
+## License
+
+[MIT](LICENSE) © Sithu Nyein
+
+## Conduct
+
+See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Questions and reports go to [sithunyein.mailto@gmail.com](mailto:sithunyein.mailto@gmail.com).

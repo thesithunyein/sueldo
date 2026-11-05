@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#1129e2" />
+<title>Sueldo · the week</title>
+<link rel="icon" href="/logo.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/base.css" />
+</head>
+<body>
+<a class="skip" href="#main" data-en="Skip to content" data-es="Saltar al contenido">Skip to content</a>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="/">
+      <img class="mark" src="/logo.png" alt="" width="34" height="34" />
+      <span class="word">Sueldo</span>
+    </a>
+    <div class="biz" id="bizLabel" hidden></div>
+    <div class="row-actions">
+      <div class="langs" role="group" aria-label="Language">
+        <button type="button" data-set-lang="en">EN</button>
+        <button type="button" data-set-lang="es">ES</button>
+      </div>
+      <button class="btn small quiet" id="fundBtn" type="button" hidden data-en="Add money" data-es="Cargar plata">Add money</button>
+      <button class="icon" id="settingsBtn" type="button" data-aria data-en="Settings" data-es="Ajustes" aria-label="Settings" hidden>
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="16" cy="12" r="2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      </button>
+    </div>
+  </header>
+  <main id="main"><p class="kicker" id="boot" data-en="Loading the week." data-es="Cargando la semana.">Loading the week.</p></main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<dialog id="dlg" aria-labelledby="dlgTitle">
+  <form class="sheet" id="dlgForm">
+    <header>
+      <h3 id="dlgTitle"></h3>
+      <button class="icon" type="button" data-close data-aria data-en="Close" data-es="Cerrar" aria-label="Close">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </header>
+    <div id="dlgBody"></div>
+    <footer id="dlgFoot"></footer>
+  </form>
+</dialog>
+<script src="/i18n.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

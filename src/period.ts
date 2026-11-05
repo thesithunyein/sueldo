@@ -1,3 +1,5 @@
+import type { Lang } from './lang.js'
+
 const ART_OFFSET_MS = -3 * 60 * 60 * 1000
 
 /** Argentina has used a fixed UTC-3 offset since 2009, so no tz database is needed. */
@@ -32,9 +34,14 @@ export const previousWeeks = (weeks: number, ref: Date = new Date()): { start: s
 
 export const monthOf = (date: string): string => date.slice(0, 7)
 
-export const periodLabel = (start: string, end: string): string => {
-  const fmt = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}`
-  return `${fmt(start)} al ${fmt(end)}`
+export const periodLabel = (start: string, end: string, lang: Lang = 'en'): string => {
+  const fmt = (d: string) =>
+    new Date(`${d}T00:00:00.000Z`).toLocaleDateString(lang === 'es' ? 'es-AR' : 'en-US', {
+      month: 'short',
+      day: 'numeric',
+      timeZone: 'UTC',
+    })
+  return lang === 'es' ? `${fmt(start)} a ${fmt(end)}` : `${fmt(start)} to ${fmt(end)}`
 }
 
 export const isPaydayWindow = (d: Date = new Date()): boolean =>

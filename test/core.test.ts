@@ -13,13 +13,14 @@ describe('money', () => {
     assert.equal(warsToArs(arsToWars(123_456)), 123_456)
   })
 
-  it('formats pesos the way an Argentine reads them', () => {
-    assert.match(formatArs(1_234_56), /1\.234,56/)
+  it('formats pesos in English', () => {
+    assert.match(formatArs(1_234_56), /1,234\.56/)
   })
 
-  it('parses both "1500" and "1.500,50"', () => {
+  it('parses "1500", "1.500,50", and "1,500.50"', () => {
     assert.equal(parseArsInput('1500'), 150_000)
     assert.equal(parseArsInput('1.500,50'), 150_050)
+    assert.equal(parseArsInput('1,500.50'), 150_050)
   })
 })
 

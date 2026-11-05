@@ -85,7 +85,7 @@ export const sendWars = async (to: Address, amountWei: bigint): Promise<PaymentR
 
   const hash = await wallet.sendTransaction({ to: tokens.wARS, data, feeCurrency } as never)
   const receipt = await publicClient.waitForTransactionReceipt({ hash })
-  if (receipt.status !== 'success') throw new Error(`la transacción ${hash} revirtió`)
+  if (receipt.status !== 'success') throw new Error(`transaction ${hash} reverted`)
 
   return {
     hash,

@@ -33,10 +33,10 @@ const addDays = (date: string, days: number): string => {
 }
 
 const people = [
-  { name: 'Lucía Fernández', role: 'Ayudante de panadería', rate: 7_500_00, cap: 1_800_000_00, start: 1 },
-  { name: 'Ramón Benítez', role: 'Panadero', rate: 9_200_00, cap: 2_000_000_00, start: 1 },
-  { name: 'Sofía Aguirre', role: 'Atención al público', rate: 6_800_00, cap: 1_500_000_00, start: 2 },
-  { name: 'Diego Sosa', role: 'Repartidor', rate: 6_500_00, cap: 1_400_000_00, start: 3 },
+  { name: 'Lucía Fernández', role: 'Bakery assistant', rate: 7_500_00, cap: 1_800_000_00, start: 1 },
+  { name: 'Ramón Benítez', role: 'Baker', rate: 9_200_00, cap: 2_000_000_00, start: 1 },
+  { name: 'Sofía Aguirre', role: 'Front of house', rate: 6_800_00, cap: 1_500_000_00, start: 2 },
+  { name: 'Diego Sosa', role: 'Delivery', rate: 6_500_00, cap: 1_400_000_00, start: 3 },
 ]
 
 const keys = ensureWorkerKeys(people.map((p) => p.name))
@@ -45,6 +45,16 @@ const dow = new Date(`${today}T00:00:00.000Z`).getUTCDay()
 const monday = addDays(today, -(dow === 0 ? 6 : dow - 1))
 
 await mutate((db) => {
+  db.business = {
+    ...db.business,
+    name: 'Los Andes Bakery',
+    owner: 'Marta Quiroga',
+    city: 'Rosario',
+    pilot: false,
+    monthlyTotalCapCentavos: db.business.monthlyTotalCapCentavos || 180_000_00,
+    approvalThresholdCentavos: db.business.approvalThresholdCentavos || 60_000_00,
+    maxHoursPerWeek: db.business.maxHoursPerWeek || 48,
+  }
   db.workers = people.map((p, i) => ({
     id: `w${i + 1}`,
     name: p.name,

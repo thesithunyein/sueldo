@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Payroll agent that pays staff in pesos over Celo. Never leaves wARS.",
+  "description": "Weekly pay for a small shop. Hours, rules, and a receipt, in pesos.",
+  "author": "Sithu Nyein <sithunyein.mailto@gmail.com>",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
+import { zeroAddress } from 'viem'
 import { decide, type GuardInput } from '../src/guardrails.js'
 import type { Worker } from '../src/store.js'
 
@@ -31,6 +32,15 @@ const base = (over: Partial<GuardInput> = {}): GuardInput => ({
 describe('decide', () => {
   it('pays a clean line', () => {
     assert.equal(decide(base()).action, 'pay')
+  })
+
+  it('pays cash without a pay account or a balance', () => {
+    const v = decide(base({
+      channel: 'cash',
+      treasuryCentavos: 0,
+      worker: { ...worker, wallet: zeroAddress },
+    }))
+    assert.equal(v.action, 'pay')
   })
 
   it('skips a worker with no hours', () => {
@@ -99,6 +109,11 @@ describe('decide', () => {
     const v = decide(base({ hours: 30, grossCentavos: 30 * worker.hourlyRateCentavos, trailingAverageHours: 20 }))
     assert.equal(v.action, 'hold')
     assert.ok(v.reasons.some((r) => r.code === 'G_ANOMALIA'))
+  })
+
+  it('pays an anomaly once the owner approves it', () => {
+    const v = decide(base({ hours: 30, grossCentavos: 30 * worker.hourlyRateCentavos, trailingAverageHours: 20, approved: true }))
+    assert.equal(v.action, 'pay')
   })
 
   it('does not flag an anomaly without history', () => {

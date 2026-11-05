@@ -44,6 +44,7 @@ export type Decision = {
   status?: 'pending' | 'sent' | 'confirmed' | 'failed'
   offRampUrl?: string
   attribution?: { codes: string[]; schemaId: number } | null
+  paidHow?: 'cash' | 'transfer'
 }
 
 export type PayrollRun = {
@@ -69,14 +70,14 @@ export type Db = {
 
 const emptyDb = (): Db => ({
   business: {
-    name: 'Panadería Los Andes',
-    cuit: '30-71234567-8',
-    owner: 'Marta Quiroga',
-    city: 'Rosario, Santa Fe',
+    name: '',
+    cuit: '',
+    owner: '',
+    city: '',
     monthlyTotalCapCentavos: 180_000_00,
     approvalThresholdCentavos: 60_000_00,
     maxHoursPerWeek: 48,
-    pilot: true,
+    pilot: false,
   },
   workers: [],
   shifts: [],

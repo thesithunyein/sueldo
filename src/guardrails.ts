@@ -1,4 +1,5 @@
 import { getAddress, isAddress, zeroAddress } from 'viem'
+import { say, type Lang } from './lang.js'
 import { formatArs } from './money.js'
 import type { Business, Reason, Worker } from './store.js'
 
@@ -19,6 +20,9 @@ export type GuardInput = {
   /** Mean weekly hours over the previous four weeks, 0 when there is no history. */
   trailingAverageHours: number
   approved: boolean
+  /** Cash weeks skip the pay-account and balance checks. The owner hands over the pesos. */
+  channel?: 'cash' | 'account'
+  lang?: Lang
 }
 
 export type GuardVerdict = {
@@ -34,63 +38,93 @@ const r = (code: string, message: string, detail?: string): Reason => ({ code, m
  */
 export const decide = (input: GuardInput): GuardVerdict => {
   const { business, worker, hours, grossCentavos } = input
+  const cash = input.channel === 'cash'
+  const lang = input.lang ?? 'en'
+  const money = (c: number) => formatArs(c, lang)
   const refusals: Reason[] = []
   const holds: Reason[] = []
   const skips: Reason[] = []
 
   if (!worker.active) {
-    skips.push(r('W_INACTIVE', `${worker.name} está dado de baja.`))
+    skips.push(r('W_INACTIVE', say(lang, `${worker.name} is not active.`, `${worker.name} no está activo.`)))
   }
   if (hours <= 0) {
-    skips.push(r('W_SIN_HORAS', 'No hay horas cargadas en el período.'))
+    skips.push(r('W_SIN_HORAS', say(lang, 'No hours this week.', 'No hay horas esta semana.')))
   }
   if (grossCentavos <= 0) {
-    skips.push(r('W_SIN_MONTO', 'El importe calculado es cero.'))
+    skips.push(r('W_SIN_MONTO', say(lang, 'The amount is zero.', 'El importe es cero.')))
   }
-  if (!isAddress(worker.wallet) || getAddress(worker.wallet) === zeroAddress) {
-    refusals.push(r('G_BILLETERA', 'La billetera de cobro no es válida.', worker.wallet))
+  if (!cash && (!isAddress(worker.wallet) || getAddress(worker.wallet) === zeroAddress)) {
+    const missing = isAddress(worker.wallet) && getAddress(worker.wallet) === zeroAddress
+    refusals.push(
+      r(
+        'G_BILLETERA',
+        missing ? say(lang, 'No pay account.', 'Falta la cuenta de cobro.') : say(lang, 'Pay account is not valid.', 'La cuenta de cobro no sirve.'),
+        missing ? say(lang, 'Add it on their profile.', 'Agregala en la ficha.') : undefined,
+      ),
+    )
   }
 
   if (hours > business.maxHoursPerWeek) {
     refusals.push(
-      r('G_HORAS', 'Las horas superan el máximo semanal.', `${hours} h contra un máximo de ${business.maxHoursPerWeek} h`),
+      r(
+        'G_HORAS',
+        say(lang, 'Too many hours this week.', 'Demasiadas horas esta semana.'),
+        say(lang, `${hours} h. Limit is ${business.maxHoursPerWeek} h.`, `${hours} h. El tope es ${business.maxHoursPerWeek} h.`),
+      ),
     )
   }
 
   if (input.alreadyPaidWorkerCentavos > 0) {
-    refusals.push(r('G_DUPLICADO', 'Esta persona ya cobró en esta semana.'))
+    refusals.push(r('G_DUPLICADO', say(lang, 'Already paid this week.', 'Ya cobró esta semana.')))
   }
 
   const capRoom = worker.monthlyCapCentavos - input.workerPaidThisMonthCentavos
   if (grossCentavos > capRoom) {
     refusals.push(
-      r('G_TOPE_TRABAJADOR', 'Supera el tope mensual acordado con esta persona.', `Quedan ${formatArs(capRoom)} de margen`),
+      r(
+        'G_TOPE_TRABAJADOR',
+        say(lang, 'Over their monthly limit.', 'Supera su tope del mes.'),
+        say(lang, `${money(capRoom)} left.`, `Quedan ${money(capRoom)}.`),
+      ),
     )
   }
 
   const businessRoom = business.monthlyTotalCapCentavos - input.alreadyPaidBusinessCentavos
   if (input.runTotalCentavos + grossCentavos > businessRoom) {
     refusals.push(
-      r('G_TOPE_NEGOCIO', 'Supera el tope mensual de la nómina.', `Quedan ${formatArs(businessRoom)} de margen`),
-    )
-  }
-
-  if (input.treasuryCentavos !== null && input.treasuryCentavos < input.runTotalCentavos + grossCentavos) {
-    refusals.push(
       r(
-        'G_FONDOS',
-        'No alcanza el saldo en pesos del agente.',
-        `Hay ${formatArs(input.treasuryCentavos)} y esta nómina necesita ${formatArs(input.runTotalCentavos + grossCentavos)}`,
+        'G_TOPE_NEGOCIO',
+        say(lang, 'Over the shop monthly limit.', 'Supera el tope del mes del negocio.'),
+        say(lang, `${money(businessRoom)} left.`, `Quedan ${money(businessRoom)}.`),
       ),
     )
   }
 
-  if (input.trailingAverageHours > 0 && hours > input.trailingAverageHours * 1.4) {
+  if (!cash && input.treasuryCentavos !== null && input.treasuryCentavos < input.runTotalCentavos + grossCentavos) {
+    refusals.push(
+      r(
+        'G_FONDOS',
+        say(lang, 'Not enough money.', 'No alcanza la plata.'),
+        say(
+          lang,
+          `You have ${money(input.treasuryCentavos)}. This pay needs ${money(input.runTotalCentavos + grossCentavos)}.`,
+          `Hay ${money(input.treasuryCentavos)}. Este pago necesita ${money(input.runTotalCentavos + grossCentavos)}.`,
+        ),
+      ),
+    )
+  }
+
+  if (input.trailingAverageHours > 0 && hours > input.trailingAverageHours * 1.4 && !input.approved) {
     holds.push(
       r(
         'G_ANOMALIA',
-        'Las horas se apartan del promedio de las últimas 4 semanas.',
-        `${hours} h contra un promedio de ${input.trailingAverageHours.toFixed(1)} h`,
+        say(lang, 'Hours are much higher than usual.', 'Las horas están muy por encima de lo usual.'),
+        say(
+          lang,
+          `${hours} h. Usual is ${input.trailingAverageHours.toFixed(1)} h.`,
+          `${hours} h. Lo usual es ${input.trailingAverageHours.toFixed(1)} h.`,
+        ),
       ),
     )
   }
@@ -99,8 +133,8 @@ export const decide = (input: GuardInput): GuardVerdict => {
     holds.push(
       r(
         'G_APROBACION',
-        'El importe supera el umbral y necesita tu aprobación.',
-        `Umbral: ${formatArs(business.approvalThresholdCentavos)}`,
+        say(lang, 'Too big. Needs your OK.', 'Es mucho. Necesita tu OK.'),
+        say(lang, `Limit is ${money(business.approvalThresholdCentavos)}.`, `El límite es ${money(business.approvalThresholdCentavos)}.`),
       ),
     )
   }
