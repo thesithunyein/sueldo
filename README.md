@@ -16,6 +16,8 @@ The alternative — an online payroll service — wants a bank account, a CUIT-b
 
 **Marta Quiroga**, 51, owns Panadería Los Andes in Rosario: four employees, cash wages, a phone with WhatsApp. She is not a crypto user and does not want to be. Her workers are not crypto users either. Two of them get paid into a bank account, two take cash.
 
+She is a persona drawn from the cash-wage pattern of small Argentine businesses, not a signed customer — the pilot in this repository runs on test wallets. What follows is the product built for her.
+
 Sueldo gives her one screen in Spanish, amounts in pesos, and a payday that happens whether or not she is standing in the bakery.
 
 ## How a payroll week works
@@ -80,6 +82,7 @@ npm run smoke -- --send 0xDestino 1.5  # a single tagged transfer, verified afte
 npm run swap:in                        # turns USDC or USA₮ into the wARS float through LI.FI
 npm run swap:in -- usdc 8              # explicit token and amount
 npm run agent:register                 # ERC-8004 identity, tagged
+npm run agent:register -- --dry-run    # simulates the mint against the live registry, sends nothing
 ```
 
 `swap:in` reads both stablecoin balances, swaps whichever holds funds (or the one you name), and pays its own gas in that same token through the fee-currency wrapper — so a wallet that never bought CELO can still fund itself.

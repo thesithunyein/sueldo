@@ -33,6 +33,16 @@ Money stays in pesos end to end. wARS is one peso, so there is no conversion, no
 - Example tagged transfer:
 - Repo:
 
+## Who it is for, and who has used it
+
+The buyer is the owner of a small Argentine business with fewer than ten employees who currently pays wages in cash — bakeries, kiosks, workshops, family restaurants. The person on the other end is a worker who wants pesos in a bank account or a wallet, not a shoebox of bills.
+
 ## Honest status
 
-Pilot. The four workers in the repository's seed are test wallets and the pilot week runs short shifts so the on-chain demonstration stays cheap; the UI says so above the total. The computation, guardrails and settlement are production paths. The next step is a real bakery with four real workers and a real float.
+Pilot. The four workers in the repository's seed are test wallets created for the pilot, and the pilot week runs short shifts so the on-chain demonstration stays cheap; the UI says so above the total. By the hackathon's definition these wallets are not independent users — the agent funded them itself. What is real is everything downstream of the wallet: the wages are computed from logged shifts, the caps and approvals are the ones a business would configure, the transfers land in wARS on mainnet with the entry's tag, and the receipts carry a working Ripio off-ramp link.
+
+The path beyond the hackathon is onboarding the first real business: the same flow, with the owner's own workers' wallets and their real hourly rates, funded by swapping the cash float the business already sets aside for payday. Nothing in the product changes for them; only the addresses and the amounts do. The first pilot is meant to come out of the Ripio builders sessions in six Argentine cities, where the businesses that pay wages in cash are already in the room.
+
+## Gas
+
+The agent pays its own gas in USDC through CIP-64, from the same wallet that holds the float. There is no relayer and no sponsored gas anywhere in the flow, so every transaction is signed and paid by the agent itself.

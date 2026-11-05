@@ -49,6 +49,13 @@ const data = `${encodeFunctionData({ abi: identityAbi, functionName: 'register',
 const account = privateKeyToAccount(config.agentKey)
 const client = createWalletClient({ account, chain: celo, transport: http(config.rpcUrl) })
 
+if (process.argv.includes('--dry-run')) {
+  const { data: returned } = await publicClient.call({ account, to: registries.identity, data })
+  console.log(`simulación sobre el registro real: devolvería el agente #${returned ? BigInt(returned) : 0n}`)
+  console.log(`agentURI: ${agentUri.startsWith('data:') ? 'data URI (self-contained)' : agentUri}`)
+  process.exit(0)
+}
+
 const hash = await client.sendTransaction({ to: registries.identity, data } as never)
 const receipt = await publicClient.waitForTransactionReceipt({ hash })
 console.log(`registro ${hash} · estado ${receipt.status}`)
