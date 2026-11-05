@@ -344,9 +344,14 @@ app.post('/api/run', async (req, res) => {
   }
 })
 
-app.get('/api/agent.json', (_req, res) => {
+app.get('/api/agent.json', (req, res) => {
   const db = load()
-  const base = process.env.PUBLIC_URL ?? `http://localhost:${config.port}`
+  const forwardedHost = req.get('x-forwarded-host') || req.get('host')
+  const proto = (req.get('x-forwarded-proto') || req.protocol || 'https').split(',')[0].trim()
+  const base = (process.env.PUBLIC_URL ?? (forwardedHost ? `${proto}://${forwardedHost}` : `http://localhost:${config.port}`)).replace(
+    /\/$/,
+    '',
+  )
   res.json({
     type: 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1',
     name: 'Sueldo',
