@@ -77,11 +77,12 @@ The agent needs wARS for the float and a little USDC or CELO for gas. Without th
 ```bash
 npm run smoke                          # balances of the agent wallet
 npm run smoke -- --send 0xDestino 1.5  # a single tagged transfer, verified after it lands
-npm run swap:in                        # turns USA₮ into the wARS float through LI.FI
+npm run swap:in                        # turns USDC or USA₮ into the wARS float through LI.FI
+npm run swap:in -- usdc 8              # explicit token and amount
 npm run agent:register                 # ERC-8004 identity, tagged
 ```
 
-`swap:in` pays its own gas in USA₮ through the fee-currency wrapper, so a wallet holding only faucet USA₮ can fund itself without ever buying CELO.
+`swap:in` reads both stablecoin balances, swaps whichever holds funds (or the one you name), and pays its own gas in that same token through the fee-currency wrapper — so a wallet that never bought CELO can still fund itself.
 
 ## Status
 
