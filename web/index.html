@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sueldo · nómina en pesos</title>
+<link rel="icon" href="/icon.svg" />
+<style>
+  :root {
+    --paper: #f4f0e6;
+    --card: #fffdf8;
+    --ink: #1a1713;
+    --muted: #6f685c;
+    --line: #e3dbc9;
+    --green: #0d5a42;
+    --green-soft: #e5efe9;
+    --amber: #94560f;
+    --amber-soft: #f7eddb;
+    --red: #96291f;
+    --red-soft: #f8e6e2;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 28px 20px 64px; }
+  header.top {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; padding-bottom: 22px; border-bottom: 1px solid var(--line);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 650; letter-spacing: .16em; text-transform: uppercase; font-size: 13px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px rgba(13,90,66,.12); }
+  .agent-chip {
+    display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted);
+    background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  h1, h2, .serif { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; font-weight: 500; }
+  .hero {
+    display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: end;
+    padding: 34px 0 30px;
+  }
+  .eyebrow { margin: 0 0 10px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  h1 { margin: 0; font-size: clamp(40px, 7vw, 62px); line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .sub { margin: 12px 0 0; color: var(--muted); max-width: 46ch; }
+  .pilot { font-size: 12.5px; max-width: 54ch; }
+  .pilot b { font-weight: 600; color: var(--ink); }
+  .btn {
+    appearance: none; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    border-radius: 999px; padding: 12px 20px; font: inherit; font-weight: 550; cursor: pointer;
+    transition: transform .12s ease, background .15s ease, border-color .15s;
+  }
+  .btn:hover { border-color: #cfc4ad; }
+  .btn:active { transform: translateY(1px); }
+  .btn.primary { background: var(--green); border-color: var(--green); color: #fff; padding: 15px 26px; font-size: 15px; }
+  .btn.primary:hover { background: #0a4b37; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+  .btn.small { padding: 7px 12px; font-size: 13px; }
+  .btn.ghost { background: transparent; }
+  .hint { margin: 10px 0 0; font-size: 12.5px; color: var(--muted); text-align: right; max-width: 26ch; }
+  .grid { display: grid; grid-template-columns: 1.55fr 1fr; gap: 18px; align-items: start; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+  .card + .card { margin-top: 18px; }
+  h2 { margin: 0 0 14px; font-size: 19px; letter-spacing: -.01em; }
+  .row {
+    display: grid; grid-template-columns: 1fr auto; gap: 10px 14px; align-items: center;
+    padding: 14px 0; border-top: 1px solid var(--line);
+  }
+  .row:first-of-type { border-top: none; }
+  .who { min-width: 0; }
+  .act { grid-column: 2; justify-self: end; }
+  .name { font-weight: 550; }
+  .role { font-size: 12.5px; color: var(--muted); }
+  .money { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .amount { font-size: 16px; }
+  .hours { font-size: 12.5px; color: var(--muted); }
+  .chip {
+    display: inline-block; font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase;
+    border-radius: 999px; padding: 3px 9px; border: 1px solid transparent; white-space: nowrap;
+  }
+  .chip.pay { background: var(--green-soft); color: var(--green); }
+  .chip.hold { background: var(--amber-soft); color: var(--amber); }
+  .chip.refuse { background: var(--red-soft); color: var(--red); }
+  .chip.skip { background: #efebe1; color: var(--muted); }
+  .chip.live { background: var(--green); color: #fff; }
+  .reasons { grid-column: 1 / -1; margin: 0; padding: 0; list-style: none; }
+  .reasons li { font-size: 12.5px; color: var(--muted); padding: 3px 0 0; }
+  .reasons li b { font-weight: 600; color: var(--ink); }
+  .facts { margin: 0; display: grid; gap: 10px; }
+  .facts div { display: flex; justify-content: space-between; gap: 12px; font-size: 13.5px; }
+  .facts dt { color: var(--muted); margin: 0; }
+  .facts dd { margin: 0; font-variant-numeric: tabular-nums; text-align: right; }
+  .big { font-family: Georgia, serif; font-size: 32px; margin: 0 0 4px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+  .tiny { font-size: 12px; color: var(--muted); margin: 0 0 14px; word-break: break-all; }
+  .receipt { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .receipt:first-of-type { border-top: none; }
+  .links { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12.5px; }
+  a { color: var(--green); text-decoration: none; border-bottom: 1px solid rgba(13,90,66,.25); }
+  a:hover { border-bottom-color: var(--green); }
+  .empty { color: var(--muted); font-size: 13.5px; padding: 8px 0 2px; }
+  form.shift { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 90px 1fr auto; gap: 8px; padding-top: 10px; }
+  form.shift input, form.shift select {
+    font: inherit; font-size: 13.5px; padding: 8px 10px; border-radius: 9px;
+    border: 1px solid var(--line); background: #fff; color: var(--ink); width: 100%;
+  }
+  .bar { position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+    background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px; font-size: 13.5px; transition: all .22s ease; max-width: 90vw; }
+  .bar.show { opacity: 1; transform: translate(-50%, 0); }
+  .bar.bad { background: var(--red); }
+  footer { margin-top: 34px; padding-top: 18px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 10px 18px;
+    justify-content: space-between; font-size: 12px; color: var(--muted); }
+  .tag { font-family: ui-monospace, "SF Mono", Consolas, monospace; }
+  @media (max-width: 780px) {
+    .grid { grid-template-columns: 1fr; }
+    .hero { grid-template-columns: 1fr; align-items: start; }
+    .hint { text-align: left; }
+    form.shift { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span class="dot"></span> Sueldo</div>
+    <div class="agent-chip" id="agentChip">agente · conectando…</div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Nómina de la semana · <span id="period">—</span></p>
+      <h1 id="total">—</h1>
+      <p class="sub" id="summary">Calculando las horas del período.</p>
+      <p class="sub pilot" id="pilot" hidden></p>
+    </div>
+    <div>
+      <button class="btn primary" id="run" disabled>Ejecutar nómina</button>
+      <p class="hint" id="hint"></p>
+    </div>
+  </section>
+
+  <div class="grid">
+    <article class="card">
+      <h2>Equipo</h2>
+      <div id="workers"></div>
+    </article>
+    <div>
+      <article class="card">
+        <h2>Saldo del agente</h2>
+        <p class="big" id="treasury">—</p>
+        <p class="tiny" id="treasuryAddr"></p>
+        <dl class="facts" id="treasuryFacts"></dl>
+      </article>
+      <article class="card">
+        <h2>Tope del mes</h2>
+        <p class="big" id="monthPaid">—</p>
+        <p class="tiny" id="monthCap"></p>
+        <dl class="facts" id="monthFacts"></dl>
+      </article>
+    </div>
+  </div>
+
+  <article class="card">
+    <h2>Comprobantes</h2>
+    <div id="receipts"><p class="empty">Todavía no hay pagos. Cuando ejecutes la nómina, cada pago deja su transacción acá.</p></div>
+  </article>
+
+  <footer>
+    <div>
+      <span id="agentId">ERC-8004 sin registrar</span> ·
+      <span class="tag" id="tag">—</span> ·
+      <a href="https://celoscan.io" target="_blank" rel="noopener">Celo mainnet</a>
+    </div>
+    <div>Los sueldos se pagan en wARS, el peso argentino en Celo.</div>
+  </footer>
+</div>
+<div class="bar" id="bar"></div>
+
+<script>
+  const $ = (s) => document.querySelector(s)
+  const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+  const ars = (c) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 2 }).format((c || 0) / 100)
+  const short = (a) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '—')
+  let state = null
+  const approved = new Set()
+  let busy = false
+
+  function toast(msg, bad) {
+    const bar = $('#bar')
+    bar.textContent = msg
+    bar.className = `bar show${bad ? ' bad' : ''}`
+    clearTimeout(toast.t)
+    toast.t = setTimeout(() => { bar.className = 'bar' }, 4200)
+  }
+
+  async function load() {
+    const res = await fetch('/api/state')
+    state = await res.json()
+    render()
+  }
+
+  function decisionFor(workerId) {
+    return state.plan.decisions.find((d) => d.workerId === workerId)
+  }
+
+  function render() {
+    const { business, plan, treasury, agent, month, receipts, workers } = state
+
+    $('#period').textContent = plan.period.label
+    $('#total').textContent = ars(plan.totals.computedCentavos)
+
+    const held = plan.decisions.filter((d) => d.action === 'hold').length
+    const refused = plan.decisions.filter((d) => d.action === 'refuse').length
+    const shortOfFunds = refused > 0 && plan.decisions.filter((d) => d.action === 'refuse').every((d) => d.reasons.some((r) => r.code === 'G_FONDOS'))
+    const parts = []
+    if (shortOfFunds) {
+      parts.push(`Falta saldo: hay ${ars(treasury.arsCentavos)} y esta nómina necesita ${ars(plan.totals.computedCentavos)}.`)
+    } else {
+      if (plan.totals.headcount > 0) parts.push(`${plan.totals.headcount} ${plan.totals.headcount === 1 ? 'persona' : 'personas'} con pago listo`)
+      if (held) parts.push(`${held} ${held === 1 ? 'espera' : 'esperan'} tu aprobación`)
+      if (refused) parts.push(`${refused} ${refused === 1 ? 'pago frenado' : 'pagos frenados'} por una regla`)
+    }
+    const line = parts.join(' · ')
+    $('#summary').textContent = plan.totals.computedCentavos === 0
+      ? 'No hay horas cargadas en esta semana.'
+      : line.endsWith('.') ? line : `${line}.`
+
+    const runBtn = $('#run')
+    const pending = plannedPayable()
+    runBtn.disabled = busy || !treasury.connected || pending === 0
+    runBtn.textContent = busy ? 'Pagando…' : pending > 0 ? `Ejecutar nómina · ${ars(pending)}` : 'Nada para pagar'
+    $('#hint').textContent = !treasury.connected
+      ? 'El agente no tiene clave configurada.'
+      : agent.running
+        ? 'Nómina en curso.'
+        : `Se paga desde el saldo del agente en wARS, sin que nadie toque una billetera.`
+
+    const pilot = $('#pilot')
+    pilot.hidden = !business.pilot
+    pilot.innerHTML = business.pilot
+      ? '<b>Semana piloto.</b> Se liquidan turnos cortos para probar el circuito completo en mainnet con fondos reales.'
+      : ''
+
+    $('#agentChip').innerHTML = `${esc(agent.address ? short(agent.address) : 'sin clave')} <span style="opacity:.45">·</span> ${agent.schedule ? esc(agent.schedule) : 'manual'}`
+
+    $('#treasury').textContent = ars(treasury.arsCentavos)
+    $('#treasuryAddr').textContent = treasury.address ? `wARS en ${treasury.address}` : 'Sin dirección de agente'
+    $('#treasuryFacts').innerHTML = `
+      <div><dt>Gas en USDC</dt><dd>${esc(treasury.usdc)}</dd></div>
+      <div><dt>Gas en CELO</dt><dd>${esc(treasury.celo)}</dd></div>
+      <div><dt>Alcanza para</dt><dd>${plan.totals.payCentavos ? Math.floor(treasury.arsCentavos / Math.max(plan.totals.payCentavos, 1)) + ' nóminas' : '—'}</dd></div>`
+
+    $('#monthPaid').textContent = ars(month.paidCentavos)
+    $('#monthCap').textContent = `de ${ars(month.capCentavos)} permitidos en el mes`
+    $('#monthFacts').innerHTML = `
+      <div><dt>Umbral de aprobación</dt><dd>${ars(business.approvalThresholdCentavos)}</dd></div>
+      <div><dt>Máximo semanal</dt><dd>${business.maxHoursPerWeek} h por persona</dd></div>
+      <div><dt>Reparto</dt><dd>${Math.round((month.paidCentavos / Math.max(month.capCentavos, 1)) * 100)}% usado</dd></div>`
+
+    $('#workers').innerHTML = workers.map((w) => {
+      const d = decisionFor(w.id) || { action: 'skip', reasons: [], grossCentavos: 0 }
+      const label = { pay: 'listo', hold: 'espera tu OK', refuse: 'no se paga', skip: 'sin horas' }[d.action]
+      const canApprove = d.action === 'hold'
+      const isApproved = approved.has(w.id)
+      const reasons = d.reasons.length
+        ? `<ul class="reasons">${d.reasons.map((r) => `<li><b>${esc(r.message)}</b>${r.detail ? ` · ${esc(r.detail)}` : ''}</li>`).join('')}</ul>`
+        : ''
+      const action = canApprove
+        ? `<button class="btn small ghost" data-approve="${esc(w.id)}">${isApproved ? 'Aprobado ✓' : 'Aprobar'}</button>`
+        : `<button class="btn small ghost" data-shift="${esc(w.id)}">+ horas</button>`
+      return `
+        <div class="row" data-row="${esc(w.id)}">
+          <div class="who">
+            <div class="name">${esc(w.name)}</div>
+            <div class="role">${esc(w.role)} · ${ars(w.hourlyRateCentavos)}/h</div>
+          </div>
+          <div class="money">
+            <div class="amount">${ars(d.grossCentavos)}</div>
+            <div class="hours">${d.hours} h · <span class="chip ${d.action}">${label}</span></div>
+          </div>
+          ${reasons}
+          <div class="act">${action}</div>
+          <form class="shift" data-form="${esc(w.id)}" hidden>
+            <input type="date" name="date" value="${new Date().toISOString().slice(0, 10)}" required />
+            <input type="number" name="hours" min="0.5" max="16" step="0.5" value="4" required />
+            <input type="text" name="note" placeholder="Nota (opcional)" />
+            <button class="btn small" type="submit">Agregar</button>
+          </form>
+        </div>`
+    }).join('')
+
+    $('#receipts').innerHTML = receipts.length
+      ? receipts.map((r) => `
+        <div class="receipt">
+          <div>
+            <div class="name">${esc(r.workerName)} <span class="hours">· ${esc(r.period)}</span></div>
+            <div class="links">
+              ${r.txHash ? `<a href="https://celoscan.io/tx/${esc(r.txHash)}" target="_blank" rel="noopener">ver transacción</a>` : '<span class="hours">sin transacción</span>'}
+              ${r.offRampUrl ? `<a href="${esc(r.offRampUrl)}" target="_blank" rel="noopener">cobrar en Ripio</a>` : ''}
+              ${r.attribution?.codes?.length ? `<span class="tag" style="color:var(--muted)">tag ${esc(r.attribution.codes.join(','))}</span>` : ''}
+            </div>
+          </div>
+          <div class="money">
+            <div class="amount">${ars(r.amountCentavos)}</div>
+            <div class="hours">${esc(r.status)}</div>
+          </div>
+        </div>`).join('')
+      : `<p class="empty">Todavía no hay pagos. Cuando ejecutes la nómina, cada pago deja su transacción acá.</p>`
+
+    $('#tag').textContent = agent.tag
+    $('#agentId').innerHTML = agent.erc8004Id
+      ? `Agente ERC-8004 <a href="https://8004scan.io/agents/celo/${esc(agent.erc8004Id)}" target="_blank" rel="noopener">#${esc(agent.erc8004Id)}</a>`
+      : 'ERC-8004 sin registrar'
+  }
+
+  function plannedPayable() {
+    if (!state) return 0
+    return state.plan.decisions
+      .filter((d) => d.action === 'pay')
+      .reduce((sum, d) => sum + d.grossCentavos, 0)
+  }
+
+  document.addEventListener('click', (event) => {
+    const approve = event.target.closest('[data-approve]')
+    if (approve) {
+      const id = approve.dataset.approve
+      approved.has(id) ? approved.delete(id) : approved.add(id)
+      refreshPlan()
+      return
+    }
+    const shift = event.target.closest('[data-shift]')
+    if (shift) {
+      const form = document.querySelector(`[data-form="${shift.dataset.shift}"]`)
+      if (form) form.hidden = !form.hidden
+    }
+  })
+
+  document.addEventListener('submit', async (event) => {
+    const form = event.target.closest('form.shift')
+    if (!form) return
+    event.preventDefault()
+    const data = new FormData(form)
+    const res = await fetch('/api/shifts', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        workerId: form.dataset.form,
+        date: data.get('date'),
+        hours: Number(data.get('hours')),
+        note: data.get('note'),
+      }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      toast(err.error || 'No se pudo cargar el turno', true)
+      return
+    }
+    toast('Turno cargado')
+    await load()
+  })
+
+  async function refreshPlan() {
+    const res = await fetch('/api/plan', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ approvedWorkerIds: [...approved] }),
+    })
+    state.plan = await res.json()
+    render()
+  }
+
+  $('#run').addEventListener('click', async () => {
+    if (busy) return
+    busy = true
+    render()
+    const poll = setInterval(() => load().catch(() => {}), 1400)
+    try {
+      const res = await fetch('/api/run', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ approvedWorkerIds: [...approved] }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'La nómina falló')
+      const paid = data.totals.paidCentavos
+      toast(paid > 0 ? `Nómina pagada: ${ars(paid)} en wARS` : 'La nómina terminó sin pagos')
+      approved.clear()
+    } catch (error) {
+      toast(error.message, true)
+    } finally {
+      clearInterval(poll)
+      busy = false
+      await load()
+    }
+  })
+
+  load().catch((error) => toast(`No pude leer el estado: ${error.message}`, true))
+  setInterval(() => { if (!busy) load().catch(() => {}) }, 30000)
+</script>
+</body>
+</html>

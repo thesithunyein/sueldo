@@ -1,0 +1,30 @@
+{
+  "name": "sueldo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Payroll agent that pays staff in pesos over Celo. Never leaves wARS.",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "test": "node --import tsx --test test/*.test.ts",
+    "seed": "tsx src/seed.ts",
+    "wallet": "tsx scripts/wallet.ts",
+    "smoke": "tsx scripts/smoke.ts",
+    "agent:register": "tsx src/register-agent.ts",
+    "typecheck": "tsc --noEmit",
+    "swap:in": "tsx scripts/swap-in.ts"
+  },
+  "dependencies": {
+    "@celo/attribution-tags": "^0.2.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "viem": "^2.21.44"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.9.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}
