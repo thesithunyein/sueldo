@@ -17,6 +17,10 @@ Sueldo is one business, one page, and a file for the accountant. It does not ask
 
 Author: Sithu Nyein · [sithunyein.mailto@gmail.com](mailto:sithunyein.mailto@gmail.com)
 
+<p align="center">
+  <img src="docs/home.png" alt="Sueldo home. The week in pesos, ready to close." width="720">
+</p>
+
 ## Current stage
 
 The shop page is live. The agent is registered on Celo and has paid one pilot week in wARS. The four pay accounts were created for that pilot. They are not a shop's staff.
