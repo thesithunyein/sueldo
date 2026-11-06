@@ -19,17 +19,26 @@ Author: Sithu Nyein · [sithunyein.mailto@gmail.com](mailto:sithunyein.mailto@gm
 
 ## Current stage
 
-The shop page is live. The agent has an identity on Celo. It can pay a network fee. It has not paid a wage yet, because the wallet holds no wARS.
+The shop page is live. The agent is registered on Celo and has paid one pilot week in wARS. The four pay accounts were created for that pilot. They are not a shop's staff.
 
 | | |
 | --- | --- |
 | Site | [sueldo-pay.vercel.app](https://sueldo-pay.vercel.app) |
 | Agent | [ERC-8004 #10042](https://8004scan.io/agents/celo/10042) |
 | Wallet | [`0x4563137FA379b077b9C5743E660553245518e29a`](https://celoscan.io/address/0x4563137FA379b077b9C5743E660553245518e29a) |
-| Tag | `celo_cd9bddf67435`, on the [registration](https://celoscan.io/tx/0x967b4c061e03619a2115546206f7c5569d5e6cb62fe0264f9ac63eede0ba9c03) |
-| Fees | CELO is in the wallet |
-| Wages | Waiting on wARS. One wARS is one peso |
+| Tag | `celo_cd9bddf67435` |
+| Fees | The pilot transfers paid gas in CELO |
+| Wages | 2,700 wARS across four tagged transfers |
 | Cash book | Works with no key. You still hand over the pesos |
+
+| Person | wARS | Transaction |
+| --- | --- | --- |
+| Diego Sosa | 585 | [`0xeee4a900…06db2`](https://celoscan.io/tx/0xeee4a9002edc661661c98c755015801eddc33a5805742758302d06749f306db2) |
+| Lucía Fernández | 675 | [`0xb80e5286…01b97`](https://celoscan.io/tx/0xb80e5286e1f81df8d69061f58ab075b80acc60a1c933c7324911587c66d01b97) |
+| Ramón Benítez | 828 | [`0xc8251244…7afa9`](https://celoscan.io/tx/0xc82512441edb87e70ee3399d439e4f473bdd85582b41a5065937273b0687afa9) |
+| Sofía Aguirre | 612 | [`0x845981bc…93bd0`](https://celoscan.io/tx/0x845981bcfdab867420a23200ad62848aae63e8ef41ef473ee770bb59f2893bd0) |
+
+The pesos came from swapping CELO already in the wallet: [`0x2a1bb3a7…a2e75`](https://celoscan.io/tx/0x2a1bb3a793d24f376c4b4333a0a770483a986599fa41232b3db62aebfc7a2e75).
 
 ## The problem
 
