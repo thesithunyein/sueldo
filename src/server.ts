@@ -389,7 +389,7 @@ app.delete('/api/workers/:id', async (req, res) => {
     db.workers = db.workers.filter((w) => w.id !== id)
     db.shifts = db.shifts.filter((s) => s.workerId !== id)
   })
-  res.status(204).end()
+  res.json({ ok: true })
 })
 
 app.get('/api/export.csv', (req, res) => {
