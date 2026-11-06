@@ -133,6 +133,13 @@ app.get('/api/state', async (req, res, next) => {
         schedule: config.scheduleEnabled ? 'viernes 18:00 (ART)' : null,
         paydayNow: isPaydayWindow(),
       },
+      book: {
+        business: db.business,
+        workers: db.workers,
+        shifts: db.shifts,
+        runs: db.runs,
+        agent: db.agent,
+      },
     })
   } catch (error) {
     next(error)
@@ -189,6 +196,42 @@ app.delete('/api/shifts/:id', async (req, res) => {
     db.shifts = db.shifts.filter((s) => s.id !== req.params.id)
   })
   res.status(204).end()
+})
+
+app.post('/api/restore', async (req, res) => {
+  const lang = requestLang(req)
+  const body = req.body ?? {}
+  const business = body.business
+  const workers = body.workers
+  const shifts = body.shifts
+  const runs = body.runs
+  if (!business || typeof business.name !== 'string' || !business.name.trim()) {
+    return res.status(400).json({ error: say(lang, 'Nothing to restore.', 'No hay nada para recuperar.') })
+  }
+  if (!Array.isArray(workers) || !Array.isArray(shifts) || workers.length > 40 || shifts.length > 4000) {
+    return res.status(400).json({ error: say(lang, 'That copy cannot be used.', 'Esa copia no sirve.') })
+  }
+  const current = load()
+  if (current.business.name) return res.json({ restored: false })
+  await mutate((db) => {
+    if (db.business.name) return
+    db.business = {
+      ...db.business,
+      name: String(business.name).slice(0, 80),
+      owner: String(business.owner ?? '').slice(0, 80),
+      city: String(business.city ?? '').slice(0, 80),
+      cuit: String(business.cuit ?? '').slice(0, 20),
+      monthlyTotalCapCentavos: Number(business.monthlyTotalCapCentavos) || db.business.monthlyTotalCapCentavos,
+      approvalThresholdCentavos: Number(business.approvalThresholdCentavos) || db.business.approvalThresholdCentavos,
+      maxHoursPerWeek: Number(business.maxHoursPerWeek) || db.business.maxHoursPerWeek,
+      pilot: Boolean(business.pilot),
+    }
+    db.workers = workers.filter((w) => w && typeof w.id === 'string' && typeof w.name === 'string').slice(0, 40)
+    db.shifts = shifts.filter((s) => s && typeof s.id === 'string' && typeof s.workerId === 'string').slice(0, 4000)
+    db.runs = Array.isArray(runs) ? runs.slice(0, 200) : []
+    if (body.agent && typeof body.agent === 'object') db.agent = { ...db.agent, ...body.agent }
+  })
+  res.json({ restored: true })
 })
 
 app.post('/api/business', async (req, res) => {

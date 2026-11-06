@@ -39,10 +39,33 @@ function toast(msg, bad) {
   toast.t = setTimeout(() => { el.className = 'toast' }, 4600)
 }
 
+const bookKey = 'sueldo-book'
+
+function rememberBook(book) {
+  if (!book?.business?.name) return
+  try { localStorage.setItem(bookKey, JSON.stringify(book)) } catch { /* the shop still lives for this visit */ }
+}
+
 async function load() {
   const res = await fetch('/api/state', { headers: apiHeaders() })
   if (!res.ok) throw new Error(t('Could not load the week.', 'No pude leer la semana.'))
   state = await res.json()
+  if (!state.business?.name) {
+    let saved = null
+    try { saved = localStorage.getItem(bookKey) } catch { saved = null }
+    if (saved) {
+      const put = await fetch('/api/restore', {
+        method: 'POST',
+        headers: apiHeaders({ 'content-type': 'application/json' }),
+        body: saved,
+      })
+      if (put.ok && (await put.json()).restored) {
+        const again = await fetch('/api/state', { headers: apiHeaders() })
+        if (again.ok) state = await again.json()
+      }
+    }
+  }
+  rememberBook(state.book)
   if (approved.size && state.business?.name) {
     const planRes = await fetch('/api/plan', {
       method: 'POST',
