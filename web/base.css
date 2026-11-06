@@ -297,7 +297,7 @@ dialog::backdrop { background: rgba(8, 14, 70, 0.45); }
   padding: 22px 20px 22px;
   backdrop-filter: blur(16px);
 }
-.steps .n { color: rgba(255, 255, 255, 0.55); font-size: 13px; letter-spacing: 0.12em; }
+.steps .ico { width: 28px; height: 28px; }
 .steps h3 { margin: 28px 0 8px; font-size: 28px; font-weight: 400; letter-spacing: -0.06em; }
 .steps p { margin: 0; color: rgba(255, 255, 255, 0.78); max-width: 28ch; }
 
@@ -369,10 +369,25 @@ dialog::backdrop { background: rgba(8, 14, 70, 0.45); }
 .week h1 { margin: 0; font-size: clamp(56px, 8vw, 104px); line-height: 0.9; letter-spacing: -0.08em; font-variant-numeric: tabular-nums; }
 .week .lede { margin: 10px 0 0; max-width: 46ch; }
 .week-actions { display: grid; justify-items: end; gap: 8px; }
-.guide { display: flex; gap: 18px; flex-wrap: wrap; margin: 8px 0 18px; padding: 0; list-style: none; }
-.guide li { color: var(--muted); font-size: 13.5px; }
-.guide li.now { color: var(--ink); }
-.guide li.done { color: #fff; }
+.guide { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 18px 0 0; padding: 0; list-style: none; }
+.guide button {
+  width: 100%;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.72);
+}
+.guide .ico { width: 22px; height: 22px; flex: none; }
+.guide li.now button { background: #fff; color: var(--blue); box-shadow: none; }
+.guide li.done button { color: #fff; }
+.guide button:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .layout { display: grid; grid-template-columns: 1.45fr 0.8fr; gap: 18px; align-items: start; margin-top: 18px; }
 .card + .card, .layout ~ .card { margin-top: 18px; }
@@ -469,12 +484,40 @@ dialog::backdrop { background: rgba(8, 14, 70, 0.45); }
   .close-band, .approval { flex-direction: column; align-items: flex-start; }
 }
 @media (max-width: 700px) {
-  .wrap { padding: 16px 18px 64px; }
-  .hero h1 { font-size: 46px; }
-  .slip-amt { font-size: 52px; }
-  .person { grid-template-columns: 1fr auto; }
-  .shift { grid-template-columns: 64px 1fr auto; }
+  .wrap { padding: 12px 16px calc(28px + env(safe-area-inset-bottom)); }
+  .nav, .top { align-items: flex-start; gap: 12px; }
+  .top .row-actions, .nav .row-actions { gap: 14px; margin-left: auto; }
+  .top .biz { order: 3; flex: 1 0 100%; text-align: left; }
+  .word { font-size: 22px; }
+  .hero { padding-top: 20px; gap: 18px; }
+  .hero h1 { font-size: 44px; }
+  .lede { font-size: 18px; }
+  .hero-actions { flex-wrap: wrap; }
+  .hero-actions .btn, .week-actions .btn { width: 100%; min-height: 48px; }
+  .slip-amt { font-size: 48px; }
+  .week { padding-top: 18px; gap: 14px; }
+  .week h1 { font-size: clamp(44px, 16vw, 64px); }
+  .week-actions { justify-items: stretch; width: 100%; }
+  .week-actions .hint { text-align: left; }
+  .guide { grid-template-columns: 1fr; }
+  .steps { gap: 10px; }
+  .steps h3 { margin-top: 14px; font-size: 24px; }
+  .section-h h2, .rule h2 { font-size: 36px; }
+  .how, .faq { margin-top: 48px; }
+  .card { padding: 16px; border-radius: 20px; }
+  .card h2, .empty .name { font-size: 24px; }
+  .stat { font-size: 32px; }
+  .person { grid-template-columns: 1fr; }
+  .person .money { text-align: left; }
+  .person .row-actions .btn { min-height: 44px; }
+  .shift { grid-template-columns: 56px 1fr auto; }
   .shift .note { display: none; }
+  .approval { padding: 14px; }
+  .approval h2 { font-size: 22px; }
+  .approval .btn, .card-h .btn { min-height: 44px; }
+  .sheet { border-radius: 20px; }
+  .sheet h3 { font-size: 24px; }
+  .faq-list summary { font-size: 18px; padding-right: 28px; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

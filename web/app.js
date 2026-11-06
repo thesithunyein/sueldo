@@ -436,11 +436,34 @@ function render() {
   const fails = report?.decisions?.filter((d) => d.action === 'pay' && d.status === 'failed') || []
   const oks = report?.decisions?.filter((d) => d.action === 'pay' && d.status === 'confirmed') || []
 
+  const nextAct = workers.length === 0 ? 'add' : shifts.length === 0 ? 'hours' : ''
+  const nextLabel = workers.length === 0
+    ? t('Add a person', 'Agregar persona')
+    : shifts.length === 0
+      ? t('Log hours', 'Cargar horas')
+      : payLabel
+  const payDisabled = busy || (nextAct === '' && payable === 0)
+
   main.innerHTML = `
     ${showGuide ? `<ol class="guide">
-      <li class="${workers.length ? 'done' : 'now'}">1. ${esc(t('Add a person', 'Agregá una persona'))}</li>
-      <li class="${shifts.length ? 'done' : workers.length ? 'now' : ''}">2. ${esc(t('Log the hours', 'Cargá las horas'))}</li>
-      <li class="${shifts.length ? 'now' : ''}">3. ${esc(t('Mark the week paid', 'Marcá la semana pagada'))}</li>
+      <li class="${workers.length ? 'done' : 'now'}">
+        <button type="button" data-act="add">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5.5 19.2c1.3-3 3.6-4.4 6.5-4.4s5.2 1.4 6.5 4.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span>1. ${esc(t('Add a person', 'Agregá una persona'))}</span>
+        </button>
+      </li>
+      <li class="${shifts.length ? 'done' : workers.length ? 'now' : ''}">
+        <button type="button" data-act="hours" ${workers.length ? '' : 'disabled'}>
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 8.2V12l2.6 1.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>2. ${esc(t('Log the hours', 'Cargá las horas'))}</span>
+        </button>
+      </li>
+      <li class="${payable > 0 ? 'now' : ''}">
+        <button type="button" id="guidePay" ${payable > 0 && !busy ? '' : 'disabled'}>
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.4 12.2l2.3 2.3 4.9-5.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>3. ${esc(t('Mark the week paid', 'Marcá la semana pagada'))}</span>
+        </button>
+      </li>
     </ol>` : ''}
     <section class="week">
       <div>
@@ -449,7 +472,7 @@ function render() {
         <p class="lede" aria-live="polite">${esc(summary())}</p>
       </div>
       <div class="week-actions">
-        <button class="btn primary" type="button" id="payBtn" ${busy || payable === 0 ? 'disabled' : ''}>${payLabel}</button>
+        <button class="btn primary" type="button" id="${nextAct ? '' : 'payBtn'}" data-act="${nextAct}" ${payDisabled ? 'disabled' : ''}>${nextLabel}</button>
         <p class="hint">${esc(payHint)}</p>
       </div>
     </section>
@@ -626,7 +649,8 @@ async function runPay() {
 }
 
 document.addEventListener('click', async (event) => {
-  if (event.target.id !== 'payBtn' || busy) return
+  const pay = event.target.closest('#payBtn, #guidePay')
+  if (!pay || busy || pay.disabled) return
   openPayConfirm()
 })
 
