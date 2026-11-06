@@ -365,9 +365,9 @@ dialog::backdrop { background: rgba(8, 14, 70, 0.45); }
 .top .biz b { display: block; font-weight: 500; }
 .top .biz span { color: var(--muted); font-size: 13px; }
 
-.week { padding: 28px 0 8px; display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: end; }
-.week h1 { margin: 0; font-size: clamp(56px, 8vw, 104px); line-height: 0.9; letter-spacing: -0.08em; font-variant-numeric: tabular-nums; }
-.week .lede { margin: 10px 0 0; max-width: 46ch; }
+.week { padding: 28px 0 20px; display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: end; }
+.week h1 { margin: 0; font-size: clamp(56px, 8vw, 104px); line-height: 0.92; letter-spacing: -0.08em; font-variant-numeric: tabular-nums; }
+.week .lede { margin: 14px 0 0; max-width: 46ch; position: relative; z-index: 1; }
 .week-actions { display: grid; justify-items: end; gap: 8px; }
 .guide { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 18px 0 0; padding: 0; list-style: none; }
 .guide button {
@@ -402,7 +402,8 @@ dialog::backdrop { background: rgba(8, 14, 70, 0.45); }
   border-top: 1px solid var(--line);
 }
 .person:first-of-type { border-top: 0; }
-.person .money { text-align: right; font-variant-numeric: tabular-nums; }
+.person .money { text-align: right; font-variant-numeric: tabular-nums; align-self: start; }
+.person .money .subline { display: flex; justify-content: flex-end; align-items: center; gap: 6px; flex-wrap: wrap; }
 .person .amt { font-size: 16px; }
 .reasons { grid-column: 1 / -1; margin: 0; padding: 0; list-style: none; }
 .reasons li { color: var(--muted); font-size: 13px; }

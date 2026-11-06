@@ -412,11 +412,13 @@ function render() {
     const w = workers.find((x) => x.id === d.workerId)
     const shown = d.reasons.filter((r) => {
       if (!agent.configured && r.code === 'G_FONDOS') return false
+      if (d.hours <= 0 && (r.code === 'W_SIN_HORAS' || r.code === 'W_SIN_MONTO')) return false
       return !(r.code === 'G_FONDOS' && d.reasons.every((x) => x.code === 'G_FONDOS'))
     })
     const reasons = shown.length
       ? `<ul class="reasons">${shown.map((r) => `<li>${esc(r.message)}${r.detail ? ` ${esc(r.detail)}` : ''}</li>`).join('')}</ul>`
       : ''
+    const status = d.hours <= 0 ? '' : ` · <span class="chip ${esc(d.action)}">${esc(statusLabel(d.action))}</span>`
     return `
       <div class="person">
         <div class="who">
@@ -425,7 +427,7 @@ function render() {
         </div>
         <div class="money">
           <div class="amt">${esc(ars(d.grossCentavos))}</div>
-          <div class="subline">${esc(horas(d.hours))} · <span class="chip ${esc(d.action)}">${esc(statusLabel(d.action))}</span></div>
+          <div class="subline">${esc(horas(d.hours))}${status}</div>
         </div>
         ${reasons}
         <div class="row-actions">
