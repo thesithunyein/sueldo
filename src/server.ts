@@ -9,16 +9,64 @@ import { formatWars, parseArsInput } from './money.js'
 import { asLang, say, type Lang } from './lang.js'
 import { artDate, monthOf, isPaydayWindow, periodLabel, weekRange } from './period.js'
 import { buildPlan, isRunning, listReceipts, runPayroll } from './payroll.js'
-import { load, mutate, newId, type Db, type Worker } from './store.js'
+import { load, mutate, newId, save, type Db, type Worker } from './store.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const webDir = existsSync(join(here, '..', 'web')) ? join(here, '..', 'web') : join(process.cwd(), 'web')
 const app = express()
-app.use(express.json({ limit: '64kb' }))
+app.use(express.json({ limit: '256kb' }))
 app.use((_req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff')
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
   res.setHeader('X-Frame-Options', 'SAMEORIGIN')
+  next()
+})
+
+const snapshot = () => {
+  const db = load()
+  return { business: db.business, workers: db.workers, shifts: db.shifts, runs: db.runs, agent: db.agent }
+}
+
+const adoptBook = (book: unknown) => {
+  if (!book || typeof book !== 'object') return
+  const raw = book as { business?: BusinessLike; workers?: unknown[]; shifts?: unknown[]; runs?: unknown[]; agent?: Db['agent'] }
+  if (!raw.business || typeof raw.business.name !== 'string' || !raw.business.name.trim()) return
+  if (!Array.isArray(raw.workers) || !Array.isArray(raw.shifts)) return
+  const current = load()
+  save({
+    business: {
+      ...current.business,
+      name: raw.business.name.slice(0, 80),
+      owner: String(raw.business.owner ?? '').slice(0, 80),
+      city: String(raw.business.city ?? '').slice(0, 80),
+      cuit: String(raw.business.cuit ?? '').slice(0, 20),
+      monthlyTotalCapCentavos: Number(raw.business.monthlyTotalCapCentavos) || current.business.monthlyTotalCapCentavos,
+      approvalThresholdCentavos: Number(raw.business.approvalThresholdCentavos) || current.business.approvalThresholdCentavos,
+      maxHoursPerWeek: Number(raw.business.maxHoursPerWeek) || current.business.maxHoursPerWeek,
+      pilot: Boolean(raw.business.pilot),
+    },
+    workers: raw.workers.filter((w) => w && typeof w === 'object' && typeof (w as Worker).id === 'string').slice(0, 40) as Worker[],
+    shifts: raw.shifts.filter((s) => s && typeof s === 'object' && typeof (s as { id?: string }).id === 'string').slice(0, 4000) as Db['shifts'],
+    runs: Array.isArray(raw.runs) ? (raw.runs.slice(0, 200) as Db['runs']) : [],
+    agent: raw.agent && typeof raw.agent === 'object' ? { ...current.agent, ...raw.agent } : current.agent,
+  })
+}
+
+type BusinessLike = { name?: string; owner?: string; city?: string; cuit?: string; monthlyTotalCapCentavos?: number; approvalThresholdCentavos?: number; maxHoursPerWeek?: number; pilot?: boolean }
+
+app.use((req, res, next) => {
+  if (req.body && typeof req.body === 'object') adoptBook((req.body as { book?: unknown }).book)
+  const orig = res.json.bind(res)
+  res.json = ((body: unknown) => {
+    if (body && typeof body === 'object' && !Array.isArray(body) && req.path.startsWith('/api/') && req.path !== '/api/agent.json' && !('book' in (body as object))) {
+      try {
+        body = { ...(body as object), book: snapshot() }
+      } catch {
+        /* reply without a copy */
+      }
+    }
+    return orig(body)
+  }) as typeof res.json
   next()
 })
 
@@ -59,7 +107,7 @@ const csvCell = (value: string | number): string => {
 
 const requestLang = (req: express.Request): Lang => asLang(req.get('x-lang') || req.query.lang)
 
-app.get('/api/state', async (req, res, next) => {
+const readState: express.RequestHandler = async (req, res, next) => {
   try {
     const lang = requestLang(req)
     const db = load()
@@ -144,7 +192,9 @@ app.get('/api/state', async (req, res, next) => {
   } catch (error) {
     next(error)
   }
-})
+}
+app.get('/api/state', readState)
+app.post('/api/state', readState)
 
 app.post('/api/plan', async (req, res, next) => {
   try {

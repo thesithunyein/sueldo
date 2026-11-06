@@ -47,30 +47,21 @@ function rememberBook(book) {
 }
 
 async function load() {
-  const res = await fetch('/api/state', { headers: apiHeaders() })
+  let saved = null
+  try { saved = JSON.parse(localStorage.getItem(bookKey) || 'null') } catch { saved = null }
+  const res = await fetch('/api/state', {
+    method: 'POST',
+    headers: apiHeaders({ 'content-type': 'application/json' }),
+    body: JSON.stringify({ book: saved }),
+  })
   if (!res.ok) throw new Error(t('Could not load the week.', 'No pude leer la semana.'))
   state = await res.json()
-  if (!state.business?.name) {
-    let saved = null
-    try { saved = localStorage.getItem(bookKey) } catch { saved = null }
-    if (saved) {
-      const put = await fetch('/api/restore', {
-        method: 'POST',
-        headers: apiHeaders({ 'content-type': 'application/json' }),
-        body: saved,
-      })
-      if (put.ok && (await put.json()).restored) {
-        const again = await fetch('/api/state', { headers: apiHeaders() })
-        if (again.ok) state = await again.json()
-      }
-    }
-  }
   rememberBook(state.book)
   if (approved.size && state.business?.name) {
     const planRes = await fetch('/api/plan', {
       method: 'POST',
       headers: apiHeaders({ 'content-type': 'application/json' }),
-      body: JSON.stringify({ approvedWorkerIds: [...approved] }),
+      body: JSON.stringify({ approvedWorkerIds: [...approved], book: state.book }),
     })
     if (planRes.ok) state.plan = await planRes.json()
   }
@@ -256,9 +247,22 @@ function openDelete(worker) {
 }
 
 async function send(url, options = {}) {
-  const res = await fetch(url, { ...options, headers: apiHeaders(options.headers || {}) })
+  let payload = {}
+  if (options.body) {
+    try { payload = JSON.parse(options.body) } catch { payload = {} }
+  }
+  try {
+    const saved = JSON.parse(localStorage.getItem(bookKey) || 'null')
+    if (saved?.business?.name) payload.book = saved
+  } catch { /* this browser has no saved shop */ }
+  const res = await fetch(url, {
+    ...options,
+    headers: apiHeaders({ 'content-type': 'application/json', ...(options.headers || {}) }),
+    body: JSON.stringify(payload),
+  })
   const data = res.status === 204 ? {} : await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(data.error || t('Could not finish that.', 'No se pudo completar.'))
+  rememberBook(data.book)
   return data
 }
 
