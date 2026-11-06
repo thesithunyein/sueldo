@@ -1,3 +1,14 @@
+<p align="center">
+  <img src="web/logo.png" alt="Sueldo" width="88">
+</p>
+
+<p align="center">
+  <a href="https://sueldo-pay.vercel.app"><img alt="Live site" src="https://img.shields.io/badge/live-sueldo--pay.vercel.app-111111"></a>
+  <a href="https://celoscan.io/address/0x4563137FA379b077b9C5743E660553245518e29a"><img alt="Celo mainnet" src="https://img.shields.io/badge/Celo-mainnet-FCFF52?logo=celo&logoColor=black"></a>
+  <a href="https://8004scan.io/agents/celo/10042"><img alt="ERC-8004 agent 10042" src="https://img.shields.io/badge/ERC--8004-%2310042-3263eb"></a>
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-555555"></a>
+</p>
+
 # Sueldo
 
 Weekly pay for a small shop. The owner logs the hours, sees what each person is owed, and closes the week. Amounts stay in pesos.
@@ -5,6 +16,20 @@ Weekly pay for a small shop. The owner logs the hours, sees what each person is 
 Sueldo is one business, one page, and a file for the accountant. It does not ask the owner to learn a wallet.
 
 Author: Sithu Nyein · [sithunyein.mailto@gmail.com](mailto:sithunyein.mailto@gmail.com)
+
+## Current stage
+
+The shop page is live. The agent has an identity on Celo. It can pay a network fee. It has not paid a wage yet, because the wallet holds no wARS.
+
+| | |
+| --- | --- |
+| Site | [sueldo-pay.vercel.app](https://sueldo-pay.vercel.app) |
+| Agent | [ERC-8004 #10042](https://8004scan.io/agents/celo/10042) |
+| Wallet | [`0x4563137FA379b077b9C5743E660553245518e29a`](https://celoscan.io/address/0x4563137FA379b077b9C5743E660553245518e29a) |
+| Tag | `celo_cd9bddf67435`, on the [registration](https://celoscan.io/tx/0x967b4c061e03619a2115546206f7c5569d5e6cb62fe0264f9ac63eede0ba9c03) |
+| Fees | CELO is in the wallet |
+| Wages | Waiting on wARS. One wARS is one peso |
+| Cash book | Works with no key. You still hand over the pesos |
 
 ## The problem
 
@@ -69,7 +94,7 @@ A line that cannot be paid is never left waiting for an OK. Money is stored as i
 | What the worker gets | The cash you hand them, and a receipt | A receipt, and a cash-out link when a pay account is saved |
 | What it does not do | It does not send money | It does not invent a payment if the transfer fails |
 
-wARS on Celo is one peso per token. The page still shows pesos.
+wARS on Celo is one peso per token. The page still shows pesos. The token is `0x0dc4f92879b7670e5f4e4e6e3c801d229129d90d`.
 
 ## Languages
 
@@ -87,10 +112,11 @@ sueldo/
 │   ├── money.ts          Centavos, wARS, amount parsing
 │   ├── period.ts         Argentina week and month
 │   ├── chain.ts          Celo reads and transfers
+│   ├── register-agent.ts ERC-8004 registration
 │   ├── store.ts          The book, one JSON file
 │   ├── lang.ts           English and Spanish messages
 │   └── config.ts         Environment
-├── web/                  Pages, styles, and the client
+├── web/                  Pages, styles, logo, and the client
 ├── test/                 Rules, money, periods
 ├── scripts/              Wallet, smoke check, swap
 ├── vercel.json
@@ -135,23 +161,19 @@ Copy `.env.example` to `.env` only when you want the account path.
 | `FEE_CURRENCY` | `USDC` or `CELO` for network fees. |
 | `ATTRIBUTION_TAG` | Code attached to each on-chain payment. |
 
-`npm run wallet` prints a new key. Fund it with wARS for wages and a little USDC or CELO for fees before you turn the account path on.
+`npm run wallet` prints a new key. Fund it with wARS for wages and a little CELO or USDC for fees before you turn the account path on. Do not commit `.env`.
 
-## Deploy on Vercel
+## Deploy
 
-The repo is ready to import. You connect the account and push the code yourself.
+The live site is [sueldo-pay.vercel.app](https://sueldo-pay.vercel.app), from the `master` branch of [thesithunyein/sueldo](https://github.com/thesithunyein/sueldo).
 
-1. Create a GitHub repository and push this project. Do not commit `.env` or `.data`.
-2. In Vercel, choose **Add New Project** and import that repository.
-3. Framework preset: **Other**. Leave the output directory empty. `vercel.json` already routes every path to the server.
-4. Add environment variables only if you need them. For a cash book, none are required. For on-chain pay, set `AGENT_KEY`, `RPC_URL`, and `PUBLIC_URL`. Set `AGENT_SCHEDULE=0` on Vercel. The function does not stay awake, so Friday does not run by itself there.
-5. Deploy.
+A new push to `master` updates that site. Framework preset is **Other**. `vercel.json` routes every path to the server.
 
-On Vercel the book is stored in `/tmp`. A cold start can wipe it. A shop that must keep its history should run `npm start` on a host with a disk and set `DATA_DIR` to a persistent folder.
+For on-chain pay on the host, set `AGENT_KEY`, `RPC_URL`, and `PUBLIC_URL`. Set `AGENT_SCHEDULE=0` on Vercel. The function does not stay awake, so Friday does not run by itself there. A shop that must keep its book should run `npm start` on a host with a disk and set `DATA_DIR` to a persistent folder. On Vercel the book lives in `/tmp` and a cold start can wipe it.
 
 ## Security
 
-There is no login. Whoever can open the site can edit the book. Do not publish the URL until you are ready for that, or put it behind a private network.
+There is no login. Whoever can open the site can edit the book. Do not publish a shop URL until you are ready for that, or put it behind a private network.
 
 `AGENT_KEY` never goes to the browser. See [SECURITY.md](SECURITY.md).
 
