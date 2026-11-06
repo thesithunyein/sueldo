@@ -23,7 +23,7 @@ Author: Sithu Nyein · [sithunyein.mailto@gmail.com](mailto:sithunyein.mailto@gm
 
 ## Current stage
 
-The shop page is live. The agent is registered on Celo and has paid one pilot week in wARS. The four pay accounts were created for that pilot. They are not a shop's staff.
+The shop page is live. The agent is registered on Celo and has paid one pilot week in wARS. The four pay accounts were created for that pilot. They are not a shop's staff. The live site does not stay awake for Friday at 18:00 Argentina, so that timer does not send another wage.
 
 | | |
 | --- | --- |
