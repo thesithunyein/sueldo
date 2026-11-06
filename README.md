@@ -32,7 +32,7 @@ The shop page is live. The agent is registered on Celo and has paid one pilot we
 | Wallet | [`0x4563137FA379b077b9C5743E660553245518e29a`](https://celoscan.io/address/0x4563137FA379b077b9C5743E660553245518e29a) |
 | Tag | `celo_cd9bddf67435` |
 | Fees | The pilot transfers paid gas in CELO |
-| Wages | 2,700 wARS across four tagged transfers |
+| Wages | 2,700 wARS across four tagged transfers, plus 342 wARS to one friend |
 | Cash book | Works with no key. You still hand over the pesos |
 
 | Person | wARS | Transaction |
@@ -41,6 +41,9 @@ The shop page is live. The agent is registered on Celo and has paid one pilot we
 | Lucía Fernández | 675 | [`0xb80e5286…01b97`](https://celoscan.io/tx/0xb80e5286e1f81df8d69061f58ab075b80acc60a1c933c7324911587c66d01b97) |
 | Ramón Benítez | 828 | [`0xc8251244…7afa9`](https://celoscan.io/tx/0xc82512441edb87e70ee3399d439e4f473bdd85582b41a5065937273b0687afa9) |
 | Sofía Aguirre | 612 | [`0x845981bc…93bd0`](https://celoscan.io/tx/0x845981bcfdab867420a23200ad62848aae63e8ef41ef473ee770bb59f2893bd0) |
+| Friend, new to Celo | 342 | [`0x8a18f68a…ff85c`](https://celoscan.io/tx/0x8a18f68a863a2a575802bb3a787349d62886398458abcb46f1e10f56d14ff85c) |
+
+The 342 wARS transfer went to `0x7A35f63F81357DaDE2cff8f5699b935786Aa9Da2`. That address had no Celo history before this payment, so the project is the first money there. It is not activity from before the hackathon.
 
 The pesos came from swapping CELO already in the wallet: [`0x2a1bb3a7…a2e75`](https://celoscan.io/tx/0x2a1bb3a793d24f376c4b4333a0a770483a986599fa41232b3db62aebfc7a2e75).
 
